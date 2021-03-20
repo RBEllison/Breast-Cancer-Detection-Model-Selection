@@ -14,6 +14,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(caTools)
+library(rpart)
+library(randomForest)
 ```
 
 
@@ -21,6 +23,8 @@ library(caTools)
 ```{r}
 # Read the data
 data <- read.csv("./data/breast_cancer.csv")
+data %>% 
+  head(3)
 ```
 
 ## Attribute Information
@@ -38,43 +42,109 @@ data <- read.csv("./data/breast_cancer.csv")
 
 ## Cleaning the data
 ```{r}
-sum(is.na(data)) # No missing values
-data$Class <- ifelse(data$Class == 4, 1, 0)
+# Check for missing values
+sum(is.na(data))
+# Drop the first column for ID numbers
+data <- data[ , -1]
+# 
+data$Class <- ifelse(data$Class == 4, 1,0)
 ```
 
 
 ```{r}
 # Splitting the data
 set.seed(1)
-split <- sample.split(data$Class, SplitRatio = .8)
+split <- sample.split(data$Class, SplitRatio = 0.75)
 training <- subset(data, split == TRUE)
 test <- subset(data, split == FALSE)
 
+# Feature Scaling
+training[1:8] <- scale(training[1:8])
+test[1:8] <- scale(test[1:8])
+```
 
-
+## Logistic Regression Model
+```{r}
 
 # Fitting Logistic Regression to the training set
-classifier <- glm(Class ~ . , 
-                  family = binomial,
-                  data = data)
+classifier_logistic_regression <- glm(Class ~ . ,
+                                      family = binomial,
+                                      data = data)
 
-
-summary(classifier)
 
 # Predicting the test set results
-prob_pred <- predict(classifier, 
+prob_pred <- predict(classifier_logistic_regression, 
                      type = 'response', 
-                     newdata = test[-11])
+                     newdata = test[-10])
 
-y_pred <- ifelse(prob_pred > 0.5, 1, 0)
-
-# Making the Confusion Matrix
-cm <- table(test[ , 11], y_pred)
+y_pred_lr <- ifelse(prob_pred > 0.5, 1, 0)
+```
 
 
-# Model Accuracy
-model_accuracy <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[1,2] + cm[2,1] + cm[2,2])
-paste("Assuming 50% probability as cutoff, model accuracy is ", model_accuracy)
+## K-Nearest_Neighbors Model
+```{r}
+y_pred_knn = knn(train = training[, -10],
+             test = test[, -10],
+             cl = training[, 10],
+             k = 5,
+             prob = TRUE)
+```
+
+## Support Vector Machine Model(SVM)
+```{r}
+classifier_svm = svm(formula = Class ~ .,
+                 data = training,
+                 type = 'C-classification',
+                 kernel = 'radial')
+
+# Predicting the Test set results
+y_pred_svm = predict(classifier_svm, newdata = test[-10])
+```
+
+## Kernel Support Vector Machine Model
+```{r}
+classifier_kernel_svm = svm(formula = Class~ .,
+                 data = training,
+                 type = 'C-classification',
+                 kernel = 'radial')
+
+# Predicting the Test set results
+y_pred_kernel_svm = predict(classifier_kernel_svm, newdata = test[-10])
+```
+
+## Naive Bayes Model
+```{r}
+classifier_nb = naiveBayes(x = training[-10],
+                        y = training$Class)
+
+# Predicting the Test set results
+y_pred_nb = predict(classifier_nb, newdata = test[-10])
+```
+
+
+## Random Forest Model
+```{r}
+classifier_rf = randomForest(x = training[-10],
+                          y = training$Class,
+                          ntree = 10)
+
+# Predicting the Test set results
+y_pred_rf = predict(classifier_rf, newdata = test[-10])
+```
+
+
+## Decision Tree Model
+```{r}
+training$Class = factor(training$Class, levels = c(0, 1))
+classifier_dt = rpart(formula = Class ~ .,
+                   data = training)
+
+# Predicting the Test set results
+y_pred_dt = predict(classifier_dt, newdata = test[-10], type = 'class')
+```
+
+## Plotting the CAP curve for the models
+```{r}
 
 ```
 
