@@ -1,58 +1,68 @@
 ---
-title: "Breast Cancer Detection"
-author: "Rose Ellison"
-date: "3/12/2021"
+title: "Breast Cancer Detection Model Selection"
+author : "Rose Ellison"
 output:
+  word_document: 
+    toc: True
   pdf_document: default
   html_document: default
 ---
 
-# Breast Cancer Detection
-
-## Set up
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+```
+![](images/bg1.jpg)
+
+# Purpose
+
+The purpose of this program is to find the best model to detect breast cancer. The models will be evaluated using the cumulative accuracy profile (CAP) curve analysis. 
+
+
+# Setup
+```{r libraries, message=FALSE, warning=FALSE}
+# Libraries to be used
 library(tidyverse)
+library(magrittr)
 library(caTools)
 library(rpart)
 library(randomForest)
-```
+library(class)
+library(e1071)
+library(kableExtra)
 
-
-## Data Exploration
-```{r}
 # Read the data
 data <- read.csv("./data/breast_cancer.csv")
-data %>% 
-  head(3)
 ```
 
-## Attribute Information
-1. Sample code number : id number
-2. Clump Thickness : 1-10
-3. Uniformity of Cell Size : 1-10
-4. Uniformity of Cell Shape : 1-10
-5. Marginal Adhesion : 1-10
-6. Single Epithlial Cell Size : 1-10
-7. Bare Nuclei : 1-10
-8. Bland Chromatin : 1-10
-9. Normal Nucleoli : 1-10
-10. Mitoses : 1-10
-11. Class (2 for benign, 4 for malignant)
+# Exploration (Columns)
 
-## Cleaning the data
+  - **Sample code number** : id number
+  - **Clump Thickness** : 1-10
+  - **Uniformity of Cell Size** : 1-10
+  - **Uniformity of Cell Shape** : 1-10
+  - **Marginal Adhesion** : 1-10
+  - **Single Epithlial Cell Size **: 1-10
+  - **Bare Nuclei** : 1-10
+  - **Bland Chromatin **: 1-10
+  - **Normal Nucleoli **: 1-10
+  - **Mitoses **: 1-10
+  - **Class** (2 for benign, 4 for malignant)
+
+# Cleaning the data
 ```{r}
 # Check for missing values
 sum(is.na(data))
+
 # Drop the first column for ID numbers
 data <- data[ , -1]
-# 
+
+# Change class to 0 or 1
 data$Class <- ifelse(data$Class == 4, 1,0)
 ```
 
 
+# Splitting the Data for Supervised Learning
 ```{r}
-# Splitting the data
 set.seed(1)
 split <- sample.split(data$Class, SplitRatio = 0.75)
 training <- subset(data, split == TRUE)
@@ -63,9 +73,11 @@ training[1:8] <- scale(training[1:8])
 test[1:8] <- scale(test[1:8])
 ```
 
-## Logistic Regression Model
-```{r}
+# Classification Models
 
+
+### Logistic Regression Model
+```{r}
 # Fitting Logistic Regression to the training set
 classifier_logistic_regression <- glm(Class ~ . ,
                                       family = binomial,
@@ -81,16 +93,17 @@ y_pred_lr <- ifelse(prob_pred > 0.5, 1, 0)
 ```
 
 
-## K-Nearest_Neighbors Model
+### K-Nearest_Neighbors Model
 ```{r}
 y_pred_knn = knn(train = training[, -10],
              test = test[, -10],
              cl = training[, 10],
              k = 5,
              prob = TRUE)
+
 ```
 
-## Support Vector Machine Model(SVM)
+### Support Vector Machine Model(SVM)
 ```{r}
 classifier_svm = svm(formula = Class ~ .,
                  data = training,
@@ -101,7 +114,7 @@ classifier_svm = svm(formula = Class ~ .,
 y_pred_svm = predict(classifier_svm, newdata = test[-10])
 ```
 
-## Kernel Support Vector Machine Model
+### Kernel Support Vector Machine Model
 ```{r}
 classifier_kernel_svm = svm(formula = Class~ .,
                  data = training,
@@ -112,7 +125,7 @@ classifier_kernel_svm = svm(formula = Class~ .,
 y_pred_kernel_svm = predict(classifier_kernel_svm, newdata = test[-10])
 ```
 
-## Naive Bayes Model
+### Naive Bayes Model
 ```{r}
 classifier_nb = naiveBayes(x = training[-10],
                         y = training$Class)
@@ -122,7 +135,7 @@ y_pred_nb = predict(classifier_nb, newdata = test[-10])
 ```
 
 
-## Random Forest Model
+### Random Forest Model
 ```{r}
 classifier_rf = randomForest(x = training[-10],
                           y = training$Class,
@@ -133,7 +146,7 @@ y_pred_rf = predict(classifier_rf, newdata = test[-10])
 ```
 
 
-## Decision Tree Model
+### Decision Tree Model
 ```{r}
 training$Class = factor(training$Class, levels = c(0, 1))
 classifier_dt = rpart(formula = Class ~ .,
@@ -143,7 +156,17 @@ classifier_dt = rpart(formula = Class ~ .,
 y_pred_dt = predict(classifier_dt, newdata = test[-10], type = 'class')
 ```
 
-## Plotting the CAP curve for the models
+# Plotting the CAP curve for the models
+```{r}
+
+```
+
+# Model Selection
+```{r}
+
+```
+
+# Conclusion
 ```{r}
 
 ```
